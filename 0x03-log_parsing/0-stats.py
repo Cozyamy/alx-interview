@@ -1,52 +1,45 @@
 #!/usr/bin/python3
-'''reads stdin line by line and computes metrics'''
-import re
+"""Script that reads stdin line by line and computes metrics"""
 import sys
-import signal
 
 
-toMatch = re.compile(
-                     r'^\d{1,3}\.\d{1,3}\.\d{1,3} \
-                     \.\d{1,3}\s\-\s\[[0-9]{4}\-[0-9] \
-                     {1,2}\-[0-9]{1,2}\s[0-9]{1,2}\: \
-                     [0-9]{1,2}\:[0-9]{1,2}.[0-9]{1,6}\] \
-                     \s\"GET\s\/projects\/260\sHTTP\/ \
-                     1\.1\"\s\d{3}\s\d{1,4}$')
-statusCodeTracker = {
-    '200': 0,
-    '301': 0,
-    '400': 0,
-    '401': 0,
-    '403': 0,
-    '404': 0,
-    '405': 0,
-    '500': 0
-}
-fileSizeTracker = 0
-lineCount = 0
+if __name__ == "__main__":
+    status = {"200": 0,
+              "301": 0,
+              "400": 0,
+              "401": 0,
+              "403": 0,
+              "404": 0,
+              "405": 0,
+              "500": 0}
+    count = 1
+    file_size = 0
 
+    def get_line(line):
+        """ parse and grab data"""
+        try:
+            parsed_line = line.split()
+            status_code = parsed_line[-2]
+            if status_code in status.keys():
+                status[status_code] += 1
+            return int(parsed_line[-1])
+        except Exception:
+            return 0
 
-def handler():
-    return True
+    def print_stats():
+        """print stats"""
+        print("File size: {}".format(file_size))
+        for key in sorted(status.keys()):
+            if status[key]:
+                print("{}: {}".format(key, status[key]))
 
-
-for line in sys.stdin:
-    lineCount += 1
-    if toMatch.match(line) is False:
-        continue
-    withoutDash = line.replace('-', '')
-    arrayFromString = withoutDash.split(' ')
     try:
-        statusCode = int(arrayFromString[6])
-        if arrayFromString[5] and isinstance(int(arrayFromString[6]), int):
-            statusCodeTracker[arrayFromString[6]] += 1
-        fileSizeTracker += int(arrayFromString[7])
-        if lineCount == 10 or signal.signal(signal.SIGINT, handler):
-            print('File size: {}'.format(fileSizeTracker))
-            for key, value in statusCodeTracker.items():
-                if statusCode not in statusCodeTracker.keys():
-                    continue
-                print('{}: {}'.format(key, value))
-            lineCount = 0
-    except:
-        pass
+        for line in sys.stdin:
+            file_size += get_line(line)
+            if count % 10 == 0:
+                print_stats()
+            count += 1
+    except KeyboardInterrupt:
+        print_stats()
+        raise
+    print_stats()
