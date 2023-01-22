@@ -1,41 +1,42 @@
 #!/usr/bin/python3
-"""Input stats"""
+"""Log Parsing
+Write a script that reads stdin line by line and computes metrics:
+"""
 import sys
 
-stats = {
-    '200': 0,
-    '301': 0,
-    '400': 0,
-    '401': 0,
-    '403': 0,
-    '404': 0,
-    '405': 0,
-    '500': 0
-}
-sizes = [0]
+
+total_file_size = 0
+status = ['200', '301', '400', '401', '403', '404', '405', '500']
+obj = dict.fromkeys(status, 0)
 
 
-def print_stats():
-    print('File size: {}'.format(sum(sizes)))
-    for s_code, count in sorted(stats.items()):
-        if count:
-            print('{}: {}'.format(s_code, count))
+def printLogStat():
+    """Print log statistics"""
+    print("File size: {}".format(total_file_size))
+    for key, value in sorted(obj.items()):
+        if value > 0:
+            print("{}: {}".format(key, value))
 
 
-try:
-    for i, line in enumerate(sys.stdin, start=1):
-        matches = line.rstrip().split()
-        try:
-            status_code = matches[-2]
-            file_size = matches[-1]
-            if status_code in stats.keys():
-                stats[status_code] += 1
-            sizes.append(int(file_size))
-        except Exception:
-            pass
-        if i % 10 == 0:
-            print_stats()
-    print_stats()
-except KeyboardInterrupt:
-    print_stats()
-    raise
+if __name__ == "__main__":
+    count = 0
+    try:
+        for line in sys.stdin:
+            line = line.split()
+            count += 1
+            try:
+                total_file_size += int(line[-1])
+
+                if line[-2] in status:
+                    obj[line[-2]] += 1
+
+            except (IndexError, ValueError):
+                pass
+
+            if count % 10 == 0:
+                printLogStat()
+    except KeyboardInterrupt:
+        printLogStat()
+        raise
+    else:
+        printLogStat()
