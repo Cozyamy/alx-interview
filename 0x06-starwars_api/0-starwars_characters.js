@@ -13,7 +13,7 @@ request(filmURL + filmNum, async function (err, res, body) {
   const charURLList = JSON.parse(body).characters;
 
   // Use URL list to character pages to make new requests
-  // await queues requests until they resolve in order
+  // Then await queues requests until they resolve in order
   for (const charURL of charURLList) {
     await new Promise(function (resolve, reject) {
       request(charURL, function (err, res, body) {
